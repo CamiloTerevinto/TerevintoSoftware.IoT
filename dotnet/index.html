@@ -1,0 +1,93 @@
+<html>
+
+<head>
+    <title>CT - weather service</title>
+</head>
+
+<body>
+    <div id="temperature">
+
+    </div>
+    <div id="humidity">
+
+    </div>
+
+    <script src="https://cdn.plot.ly/plotly-2.35.2.min.js" charset="utf-8"></script>
+    <script>
+        const timeseriesApiUrl = "%%REPLACE_TIMESERIES_API%%";
+        const humidityLayout = {
+            title: "Humidity (%)",
+            xaxis: {
+                title: "Date and time",
+                type: "date"
+            },
+            yaxis: {
+                title: "Percent (%)"
+            },
+            datarevision: 0
+        };
+
+        let humidityVars = [
+            {
+                x: [],
+                y: [],
+                type: 'scatter',
+                line: { shape: "spline" }
+            }
+        ]
+
+        const temperatureLayout = {
+            title: "Temperature (C)",
+            xaxis: {
+                title: "Date and time",
+                type: "date"
+            },
+            yaxis: {
+                title: "Celsius (C)"
+            },
+            datarevision: 0
+        };
+
+        let temperatureVars = [
+            {
+                x: [],
+                y: [],
+                type: 'scatter',
+                line: { shape: "spline" }
+            }
+        ]
+
+        let lastRevision = 0;
+
+        function getTimeseriesData() {
+            fetch(timeseriesApiUrl)
+                .then(res => res.json())
+                .then(data => {
+                    lastRevision++;
+
+                    for (var i = 0; i < data.length; i++) {
+                        if (!temperatureVars[0].x.includes(data[i].Date)) {
+                            temperatureVars[0].x.push(data[i].Date)
+                            temperatureVars[0].y.push(data[i].Temperature)
+                            humidityVars[0].x.push(data[i].Date)
+                            humidityVars[0].y.push(data[i].Humidity)
+                        }
+                    }
+
+                    temperatureLayout.datarevision = lastRevision;
+                    humidityLayout.datarevision = lastRevision;
+
+                    Plotly.react('temperature', temperatureVars, temperatureLayout);
+                    Plotly.react('humidity', humidityVars, humidityLayout);
+                })
+        }
+
+        getTimeseriesData();
+
+        setInterval(() => {
+            getTimeseriesData();
+        }, 60000);
+    </script>
+</body>
+
+</html>
